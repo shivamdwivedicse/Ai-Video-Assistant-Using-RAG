@@ -45,3 +45,4 @@ requests>=2.32.0
 
 langchain-google-genai
 langchain-chroma
+yt-dlp>=2025.01.15
