@@ -1,14 +1,20 @@
+import os
 import streamlit as st
 from dotenv import load_dotenv
+from yt_dlp.utils import DownloadError
 
 from utils.audio_processor import process_input
+
 from core.transcriber import transcribe_all
+
 from core.summarizer import summarize, generate_title
+
 from core.extractor import (
     extract_action_items,
     extract_key_decisions,
     extract_questions,
 )
+
 from core.rag_engine import build_rag_chain, ask_question
 
 
@@ -23,155 +29,6 @@ st.set_page_config(
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded",
-)
-
-
-# ============================================================
-# PREMIUM DARK UI
-# ============================================================
-
-st.markdown(
-    """
-    <style>
-
-    /* Main background */
-    .stApp {
-        background:
-            radial-gradient(circle at 15% 10%, rgba(99,102,241,.16), transparent 28%),
-            radial-gradient(circle at 85% 15%, rgba(139,92,246,.13), transparent 28%),
-            #070a12;
-    }
-
-    .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-        padding-bottom: 4rem;
-    }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: #090c14;
-        border-right: 1px solid rgba(255,255,255,.08);
-    }
-
-    /* Hero */
-    .hero {
-        text-align: center;
-        padding: 55px 10px 35px;
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 30px;
-        background: rgba(99,102,241,.12);
-        border: 1px solid rgba(129,140,248,.25);
-        color: #a5b4fc;
-        font-weight: 700;
-        font-size: 13px;
-        letter-spacing: 1px;
-    }
-
-    .hero-title {
-        font-size: 64px;
-        line-height: 1.05;
-        font-weight: 800;
-        letter-spacing: -3px;
-        margin-top: 20px;
-        color: #f8fafc;
-    }
-
-    .gradient-text {
-        color: #8b5cf6;
-    }
-
-    .hero-subtitle {
-        color: #94a3b8;
-        font-size: 18px;
-        line-height: 1.6;
-        margin-top: 15px;
-    }
-
-    /* Cards */
-    .card {
-        background: rgba(255,255,255,.035);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 18px;
-    }
-
-    /* Metrics */
-    .metric-card {
-        text-align: center;
-        padding: 20px 10px;
-        background: rgba(255,255,255,.035);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 18px;
-    }
-
-    .metric-icon {
-        font-size: 28px;
-    }
-
-    .metric-value {
-        color: #f8fafc;
-        font-size: 25px;
-        font-weight: 800;
-        margin-top: 5px;
-    }
-
-    .metric-label {
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    /* Result cards */
-    .result-card {
-        background: rgba(255,255,255,.035);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 18px;
-        padding: 20px;
-        min-height: 130px;
-    }
-
-    .result-icon {
-        font-size: 28px;
-    }
-
-    .result-title {
-        color: #f8fafc;
-        font-size: 17px;
-        font-weight: 700;
-        margin-top: 8px;
-    }
-
-    /* Input */
-    div[data-testid="stTextInput"] input {
-        background: rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.1);
-        color: white;
-        border-radius: 12px;
-    }
-
-    /* Button */
-    .stButton button {
-        border-radius: 12px;
-        font-weight: 700;
-        min-height: 44px;
-    }
-
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #475569;
-        font-size: 12px;
-        padding: 40px 0 10px;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True,
 )
 
 
@@ -193,19 +50,18 @@ if "chat_history" not in st.session_state:
 with st.sidebar:
 
     st.title("🎬 VidRAG AI")
-
     st.caption("AI Video Intelligence")
 
     st.divider()
 
     st.subheader("⚙️ How it works")
 
-    st.write("🎵 Extract Audio")
-    st.write("🎙️ Whisper Transcription")
-    st.write("🧠 AI Understanding")
-    st.write("🔎 Knowledge Extraction")
-    st.write("📚 RAG Knowledge Base")
-    st.write("💬 Ask Questions")
+    st.write("1️⃣ Extract Audio")
+    st.write("2️⃣ Whisper Transcription")
+    st.write("3️⃣ AI Understanding")
+    st.write("4️⃣ Knowledge Extraction")
+    st.write("5️⃣ RAG Knowledge Base")
+    st.write("6️⃣ Ask Questions")
 
     st.divider()
 
@@ -220,7 +76,7 @@ with st.sidebar:
 
     st.divider()
 
-    st.caption("Python • Whisper • LangChain • RAG")
+    st.caption("Python • Whisper • LangChain • Chroma • RAG")
 
 
 # ============================================================
@@ -243,24 +99,92 @@ st.success("🟢 AI SYSTEM READY")
 # INPUT SECTION
 # ============================================================
 
+st.divider()
+
 st.subheader("🚀 Analyze a Video")
 
-st.caption(
-    "Paste a YouTube URL or enter a local video/audio file path."
+st.write(
+    "Choose a YouTube URL or upload a video/audio file."
 )
 
-source = st.text_input(
-    "Video URL / File Path",
-    placeholder="https://youtube.com/watch?v=..."
+input_method = st.radio(
+    "Choose input method",
+    ["🎬 YouTube URL", "📁 Upload Video / Audio"],
+    horizontal=True,
 )
+
+
+source = None
+
+
+# ============================================================
+# YOUTUBE INPUT
+# ============================================================
+
+if input_method == "🎬 YouTube URL":
+
+    source = st.text_input(
+        "YouTube URL",
+        placeholder="https://www.youtube.com/watch?v=...",
+    )
+
+    st.info(
+        "💡 YouTube downloading depends on YouTube's current "
+        "server-side restrictions. If downloading fails, "
+        "use the Upload option below."
+    )
+
+
+# ============================================================
+# FILE UPLOAD INPUT
+# ============================================================
+
+else:
+
+    uploaded_file = st.file_uploader(
+        "Upload Video / Audio",
+        type=[
+            "mp4",
+            "mp3",
+            "wav",
+            "m4a",
+            "webm",
+            "mov",
+            "ogg",
+        ],
+        help="Upload a video or audio file for AI analysis.",
+    )
+
+    if uploaded_file is not None:
+
+        os.makedirs("downloads", exist_ok=True)
+
+        file_path = os.path.join(
+            "downloads",
+            uploaded_file.name,
+        )
+
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        source = file_path
+
+        st.success(
+            f"✅ Uploaded: {uploaded_file.name}"
+        )
+
+
+# ============================================================
+# LANGUAGE + ANALYZE
+# ============================================================
 
 col1, col2 = st.columns([3, 1])
 
 with col1:
 
     language = st.selectbox(
-        "Language",
-        ["english", "hinglish"]
+        "Transcription Language",
+        ["english", "hinglish"],
     )
 
 with col2:
@@ -268,8 +192,9 @@ with col2:
     st.write("")
 
     analyze = st.button(
-        "⚡ Analyze",
-        use_container_width=True
+        "⚡ Analyze Video",
+        use_container_width=True,
+        type="primary",
     )
 
 
@@ -279,84 +204,182 @@ with col2:
 
 if analyze:
 
-    if not source.strip():
+    if not source:
 
-        st.warning("Please enter a YouTube URL or local file path.")
+        st.warning(
+            "⚠️ Please provide a YouTube URL "
+            "or upload a video/audio file."
+        )
 
-    else:
+        st.stop()
 
-        st.session_state.result = None
-        st.session_state.chat_history = []
 
-        progress = st.progress(0)
-        status = st.empty()
+    # Clear previous result
 
-        try:
+    st.session_state.result = None
+    st.session_state.chat_history = []
 
-            # Audio
-            status.info("🎵 Processing audio...")
-            progress.progress(15)
 
-            chunks = process_input(source.strip())
+    progress = st.progress(0)
 
-            # Transcription
-            status.info("🎙️ Transcribing with Whisper...")
-            progress.progress(30)
+    status = st.empty()
 
-            transcript = transcribe_all(
-                chunks,
-                language=language
+
+    try:
+
+        # ----------------------------------------------------
+        # STEP 1 — AUDIO
+        # ----------------------------------------------------
+
+        status.info("🎵 Processing audio...")
+
+        progress.progress(10)
+
+        chunks = process_input(source.strip())
+
+
+        # ----------------------------------------------------
+        # STEP 2 — TRANSCRIPTION
+        # ----------------------------------------------------
+
+        status.info("🎙️ Transcribing with Whisper...")
+
+        progress.progress(30)
+
+        transcript = transcribe_all(
+            chunks,
+            language=language,
+        )
+
+
+        # ----------------------------------------------------
+        # STEP 3 — AI UNDERSTANDING
+        # ----------------------------------------------------
+
+        status.info("🧠 Understanding the video...")
+
+        progress.progress(50)
+
+        title = generate_title(transcript)
+
+        summary = summarize(transcript)
+
+
+        # ----------------------------------------------------
+        # STEP 4 — INFORMATION EXTRACTION
+        # ----------------------------------------------------
+
+        status.info(
+            "🔎 Extracting important information..."
+        )
+
+        progress.progress(65)
+
+        action_items = extract_action_items(
+            transcript
+        )
+
+        decisions = extract_key_decisions(
+            transcript
+        )
+
+        questions = extract_questions(
+            transcript
+        )
+
+
+        # ----------------------------------------------------
+        # STEP 5 — RAG
+        # ----------------------------------------------------
+
+        status.info(
+            "📚 Building RAG knowledge base..."
+        )
+
+        progress.progress(85)
+
+        rag_chain = build_rag_chain(
+            transcript
+        )
+
+
+        # ----------------------------------------------------
+        # COMPLETE
+        # ----------------------------------------------------
+
+        progress.progress(100)
+
+        status.success(
+            "✨ Video analysis completed successfully!"
+        )
+
+
+        # ----------------------------------------------------
+        # SAVE RESULT
+        # ----------------------------------------------------
+
+        st.session_state.result = {
+
+            "title": title,
+
+            "transcript": transcript,
+
+            "summary": summary,
+
+            "action_items": action_items,
+
+            "key_decisions": decisions,
+
+            "open_questions": questions,
+
+            "rag_chain": rag_chain,
+        }
+
+
+        st.rerun()
+
+
+    except DownloadError as e:
+
+        progress.empty()
+        status.empty()
+
+        st.error(
+            "❌ YouTube video could not be downloaded."
+        )
+
+        st.warning(
+            "YouTube is currently blocking the cloud "
+            "server request (HTTP 403)."
+        )
+
+        st.info(
+            "💡 Switch to '📁 Upload Video / Audio' "
+            "and upload the same video. The complete "
+            "Whisper + AI + RAG pipeline will still work."
+        )
+
+        with st.expander("Technical details"):
+
+            st.code(
+                str(e),
+                language="text",
             )
 
-            # AI analysis
-            status.info("🧠 Understanding the video...")
-            progress.progress(50)
 
-            title = generate_title(transcript)
+    except Exception as e:
 
-            summary = summarize(transcript)
+        progress.empty()
+        status.empty()
 
-            # Extraction
-            status.info("🔎 Extracting important information...")
-            progress.progress(70)
+        st.error(
+            "❌ Something went wrong while processing "
+            "the video."
+        )
 
-            action_items = extract_action_items(transcript)
+        with st.expander("View error details"):
 
-            decisions = extract_key_decisions(transcript)
-
-            questions = extract_questions(transcript)
-
-            # RAG
-            status.info("📚 Building knowledge base...")
-            progress.progress(90)
-
-            rag_chain = build_rag_chain(transcript)
-
-            progress.progress(100)
-
-            status.success("✨ Analysis completed successfully!")
-
-            st.session_state.result = {
-                "title": title,
-                "transcript": transcript,
-                "summary": summary,
-                "action_items": action_items,
-                "key_decisions": decisions,
-                "open_questions": questions,
-                "rag_chain": rag_chain,
-            }
-
-            st.rerun()
-
-        except Exception as e:
-
-            progress.empty()
-
-            st.error("❌ Something went wrong.")
-
-            with st.expander("View error details"):
-
-                st.exception(e)
+            st.exception(e)
 
 
 # ============================================================
@@ -372,225 +395,230 @@ if result:
 
     st.header("🎯 Video Intelligence")
 
-    st.caption("Your video's AI-generated knowledge at a glance.")
-
-    # --------------------------------------------------------
-    # TITLE
-    # --------------------------------------------------------
-
-    st.markdown(
-        f"### 🎬 {result['title']}"
+    st.caption(
+        "Your video's AI-generated knowledge at a glance."
     )
 
-    # --------------------------------------------------------
+
+    # ========================================================
+    # TITLE
+    # ========================================================
+
+    st.subheader(
+        f"🎬 {result['title']}"
+    )
+
+
+    # ========================================================
     # METRICS
-    # --------------------------------------------------------
+    # ========================================================
 
-    words = len(result["transcript"].split())
+    words = len(
+        result["transcript"].split()
+    )
 
-    c1, c2, c3, c4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4)
 
-    with c1:
+    with col1:
 
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-icon">📝</div>
-                <div class="metric-value">{words:,}</div>
-                <div class="metric-label">Words</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "📝 Words",
+            f"{words:,}",
         )
 
-    with c2:
+    with col2:
 
-        st.markdown(
-            """
-            <div class="metric-card">
-                <div class="metric-icon">🧠</div>
-                <div class="metric-value">AI</div>
-                <div class="metric-label">Analysis</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "🧠 Analysis",
+            "AI",
         )
 
-    with c3:
+    with col3:
 
-        st.markdown(
-            """
-            <div class="metric-card">
-                <div class="metric-icon">📚</div>
-                <div class="metric-value">RAG</div>
-                <div class="metric-label">Knowledge</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "📚 Knowledge",
+            "RAG",
         )
 
-    with c4:
+    with col4:
 
-        st.markdown(
-            """
-            <div class="metric-card">
-                <div class="metric-icon">💬</div>
-                <div class="metric-value">∞</div>
-                <div class="metric-label">Questions</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "💬 Questions",
+            "∞",
         )
 
-    # --------------------------------------------------------
+
+    # ========================================================
     # SUMMARY
-    # --------------------------------------------------------
+    # ========================================================
+
+    st.divider()
 
     st.header("📋 Executive Summary")
 
-    st.markdown(
-        '<div class="result-card">🧠 AI generated summary</div>',
-        unsafe_allow_html=True
+    st.info(
+        "🧠 AI-generated summary"
     )
 
-    st.write(result["summary"])
+    st.write(
+        result["summary"]
+    )
 
-    # --------------------------------------------------------
-    # INSIGHTS
-    # --------------------------------------------------------
+
+    # ========================================================
+    # KEY INSIGHTS
+    # ========================================================
 
     st.header("💡 Key Insights")
 
-    c1, c2 = st.columns(2)
 
-    with c1:
+    col1, col2 = st.columns(2)
 
-        st.markdown(
-            """
-            <div class="result-card">
-                <div class="result-icon">✅</div>
-                <div class="result-title">Action Items</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
-        st.write(result["action_items"])
+    with col1:
 
-    with c2:
+        with st.container(border=True):
 
-        st.markdown(
-            """
-            <div class="result-card">
-                <div class="result-icon">🔑</div>
-                <div class="result-title">Key Decisions</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            st.subheader("✅ Action Items")
 
-        st.write(result["key_decisions"])
+            st.write(
+                result["action_items"]
+            )
 
-    c1, c2 = st.columns(2)
 
-    with c1:
+    with col2:
 
-        st.markdown(
-            """
-            <div class="result-card">
-                <div class="result-icon">❓</div>
-                <div class="result-title">Open Questions</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        with st.container(border=True):
 
-        st.write(result["open_questions"])
+            st.subheader("🔑 Key Decisions")
 
-    with c2:
+            st.write(
+                result["key_decisions"]
+            )
 
-        st.markdown(
-            """
-            <div class="result-card">
-                <div class="result-icon">⚡</div>
-                <div class="result-title">AI Knowledge Base</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
-        st.write(
-            "Your transcript has been indexed and is ready "
-            "for question answering."
-        )
+    col1, col2 = st.columns(2)
 
-    # --------------------------------------------------------
+
+    with col1:
+
+        with st.container(border=True):
+
+            st.subheader("❓ Open Questions")
+
+            st.write(
+                result["open_questions"]
+            )
+
+
+    with col2:
+
+        with st.container(border=True):
+
+            st.subheader("⚡ AI Knowledge Base")
+
+            st.write(
+                "Your transcript has been indexed "
+                "and is ready for question answering."
+            )
+
+
+    # ========================================================
     # TRANSCRIPT
-    # --------------------------------------------------------
+    # ========================================================
 
-    st.header("📜 Transcript")
+    st.divider()
 
-    with st.expander("Open full transcript"):
+    st.header("📜 Full Transcript")
+
+    with st.expander(
+        "Open full transcript"
+    ):
 
         st.text_area(
             "Transcript",
             result["transcript"],
             height=400,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
 
-    # --------------------------------------------------------
+
+    # ========================================================
     # CHAT
-    # --------------------------------------------------------
+    # ========================================================
+
+    st.divider()
 
     st.header("💬 Chat With Your Video")
 
     st.caption(
-        "Ask questions about the video and get answers from the RAG system."
+        "Ask questions about the video and get "
+        "answers from the RAG system."
     )
+
+
+    # Previous messages
 
     for message in st.session_state.chat_history:
 
-        with st.chat_message(message["role"]):
+        with st.chat_message(
+            message["role"]
+        ):
 
-            st.write(message["content"])
+            st.write(
+                message["content"]
+            )
+
+
+    # New question
 
     question = st.chat_input(
         "Ask anything about this video..."
     )
 
+
     if question:
+
+        # User message
 
         st.session_state.chat_history.append(
             {
                 "role": "user",
-                "content": question
+                "content": question,
             }
         )
+
 
         with st.chat_message("user"):
 
             st.write(question)
 
+
+        # AI response
+
         with st.chat_message("assistant"):
 
-            with st.spinner("Thinking..."):
+            with st.spinner(
+                "🧠 Thinking..."
+            ):
 
                 try:
 
                     answer = ask_question(
                         result["rag_chain"],
-                        question
+                        question,
                     )
 
                     st.write(answer)
 
+
                     st.session_state.chat_history.append(
                         {
                             "role": "assistant",
-                            "content": answer
+                            "content": answer,
                         }
                     )
+
 
                 except Exception as e:
 
@@ -607,32 +635,44 @@ else:
 
     st.divider()
 
-    c1, c2, c3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-    with c1:
+
+    with col1:
+
         st.metric(
             "🎙️ Transcription",
-            "Whisper"
+            "Whisper",
         )
 
-    with c2:
+
+    with col2:
+
         st.metric(
             "🧠 Intelligence",
-            "LLM"
+            "LLM",
         )
 
-    with c3:
+
+    with col3:
+
         st.metric(
             "📚 Search",
-            "RAG"
+            "RAG",
         )
 
-    st.markdown("### 🎬 Ready when you are")
+
+    st.divider()
+
+    st.subheader(
+        "🎬 Ready when you are"
+    )
 
     st.write(
-        "Enter a YouTube video above and VidRAG AI will "
-        "turn it into summaries, insights and an interactive "
-        "knowledge base."
+        "Provide a YouTube video URL or upload a "
+        "video/audio file. VidRAG AI will transform "
+        "it into summaries, insights, searchable "
+        "knowledge and an interactive AI chat."
     )
 
 
@@ -640,13 +680,9 @@ else:
 # FOOTER
 # ============================================================
 
-st.markdown("## ✦ VIDRAG AI")
+st.divider()
 
-st.title("Turn Videos Into Knowledge.")
-
-st.write(
-    "Watch less. Understand more. "
-    "Transform long videos into searchable AI knowledge."
+st.caption(
+    "🎬 VidRAG AI • Video Intelligence powered by "
+    "Whisper + LLM + Chroma RAG"
 )
-
-st.success("🟢 AI SYSTEM READY")
