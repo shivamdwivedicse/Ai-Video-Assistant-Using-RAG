@@ -9,16 +9,16 @@ def download_youtube_audio(url: str) -> str:
     output_path = os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s")
 
     ydl_opts = {
-        "format": "worstaudio/worst",
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "web"]
-            }
-        },
+        "format": "bestaudio/best",
         "outtmpl": output_path,
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        },
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
