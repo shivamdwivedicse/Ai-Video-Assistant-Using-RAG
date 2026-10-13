@@ -7,6 +7,14 @@ from dotenv import load_dotenv
 
 load_dotenv()  # must run before core imports (transcriber reads env at import)
 
+import imageio_ffmpeg
+_d = "/tmp/ffbin"
+os.makedirs(_d, exist_ok=True)
+_l = os.path.join(_d, "ffmpeg")
+if not os.path.exists(_l):
+       os.symlink(imageio_ffmpeg.get_ffmpeg_exe(), _l)
+       os.environ["PATH"] = _d + os.pathsep + os.environ["PATH"]
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
