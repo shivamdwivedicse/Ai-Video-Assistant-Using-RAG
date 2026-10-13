@@ -140,7 +140,7 @@ async def analyze(
         "steps": STEPS,
         "is_url": source.startswith("http"),
     }
-    print(f"JOB CREATED | ID={job_id} | PID={os.getpid()}")
+    print(f"JOB CREATED | ID={job_id} | PID={os.getpid()}", flush=True)
     threading.Thread(
         target=run_job, args=(job_id, source, language), daemon=True
     ).start()
