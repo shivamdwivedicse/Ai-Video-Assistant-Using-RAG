@@ -50,7 +50,7 @@ function view(name) {
 }
 $("#newBtn").onclick = () => {
   jobId = null; result = null;
-  $("#msgs").innerHTML = '<div class="msg bot">Hi! Is video ke baare me kuch bhi poocho — main sirf transcript se jawab dunga.</div>';
+  $("#msgs").innerHTML = '<div class="msg bot">Hi! Ask me anything about this video. I will answer only from its transcript.</div>';
   show($("#suggest"));
   setMode("file");
   view("home");
@@ -64,10 +64,10 @@ $("#analyzeBtn").onclick = async () => {
   fd.append("language", lang);
   if (mode === "url") {
     const u = $("#urlInput").value.trim();
-    if (!u) return showErr("YouTube URL daalo ya file upload karo.");
+    if (!u) return showErr("Enter a YouTube URL or upload a file.");
     fd.append("url", u);
   } else {
-    if (!file) return showErr("Pehle ek video/audio file chuno.");
+    if (!file) return showErr("Please choose a video or audio file first.");
     fd.append("file", file);
   }
   $("#analyzeBtn").disabled = true;
@@ -108,7 +108,7 @@ async function poll() {
       view("home");
       let m = j.error || "Something went wrong";
       if (/403|youtube|download/i.test(m)) {
-        m = "YouTube ne download block kar diya. Same video file upload karke try karo.";
+        m = "YouTube blocked the download. Please upload the same video file and try again.";
         setMode("file"); // auto-switch to the upload option
       }
       return showErr(m);
