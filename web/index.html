@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VidRAG AI — Watch less. Understand more.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="aurora"><span></span><span></span><span></span></div>
+<div class="grid-bg"></div>
+
+<nav class="nav">
+  <div class="brand"><span class="logo">▶</span> VidRAG<b>AI</b></div>
+  <div class="nav-right">
+    <span class="pill"><i class="dot"></i> System ready</span>
+    <button class="btn ghost sm hidden" id="newBtn">+ New video</button>
+  </div>
+</nav>
+
+<!-- ============ HERO / INPUT ============ -->
+<main id="home" class="container">
+  <section class="hero">
+    <span class="eyebrow">✦ Video intelligence, powered by RAG</span>
+    <h1>Turn videos into <span class="grad">knowledge.</span></h1>
+    <p class="sub">Summaries, action items, decisions and a chat that actually knows your video. Drop a file or a link — we do the watching.</p>
+  </section>
+
+  <section class="card glass input-card">
+    <!-- Upload is primary (first + default), YouTube is secondary -->
+    <div class="tabs seg" id="srcTabs">
+      <button class="active" data-mode="file">📁 Upload file</button>
+      <button data-mode="url">🎬 YouTube URL</button>
+    </div>
+
+    <div id="fileBox" class="field">
+      <label class="drop" id="drop">
+        <input id="fileInput" type="file" accept=".mp4,.mp3,.wav,.m4a,.webm,.mov,.ogg,video/*,audio/*" hidden />
+        <div class="drop-ico">⬆</div>
+        <div><b>Drag & drop</b> or click to browse</div>
+        <small>mp4 · mp3 · wav · m4a · webm · mov · ogg</small>
+        <div id="fileName" class="fname hidden"></div>
+      </label>
+    </div>
+
+    <div id="urlBox" class="field hidden">
+      <input id="urlInput" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+      <p class="hint">YouTube sometimes blocks cloud servers. If the link fails, use file upload instead.</p>
+    </div>
+
+    <div class="row">
+      <div class="seg" id="langTabs">
+        <button class="active" data-lang="english">English</button>
+        <button data-lang="hinglish">Hinglish</button>
+      </div>
+      <button class="btn primary" id="analyzeBtn">⚡ Analyze video</button>
+    </div>
+    <p class="err hidden" id="homeErr"></p>
+  </section>
+
+  <section class="features">
+    <div class="feat glass"><span>📋</span><b>Smart summary</b><small>Map-reduce, long videos ok</small></div>
+    <div class="feat glass"><span>✅</span><b>Action items</b><small>Owners & deadlines</small></div>
+    <div class="feat glass"><span>🔑</span><b>Key decisions</b><small>Nothing gets lost</small></div>
+    <div class="feat glass"><span>💬</span><b>Chat with video</b><small>Grounded answers only</small></div>
+  </section>
+</main>
+
+<!-- ============ PROCESSING ============ -->
+<section id="processing" class="container narrow hidden">
+  <div class="card glass proc">
+    <div class="orb"></div>
+    <h2 id="procMsg">Starting...</h2>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="pct" id="pct">0%</div>
+    <ol class="steps" id="stepsList"></ol>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section id="results" class="container wide hidden">
+  <header class="res-head">
+    <span class="eyebrow">✦ Analysis complete</span>
+    <h2 id="resTitle"></h2>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div class="dash">
+    <div class="left">
+      <div class="tabs seg wrap" id="resTabs">
+        <button class="active" data-t="summary">📋 Summary</button>
+        <button data-t="action_items">✅ Actions</button>
+        <button data-t="key_decisions">🔑 Decisions</button>
+        <button data-t="open_questions">❓ Questions</button>
+        <button data-t="transcript">📜 Transcript</button>
+      </div>
+      <div class="card glass panel">
+        <div class="panel-tools">
+          <button class="btn ghost sm" id="copyBtn">Copy</button>
+          <button class="btn ghost sm" id="dlBtn">Download .txt</button>
+        </div>
+        <div id="panelBody" class="md"></div>
+      </div>
+    </div>
+
+    <aside class="right">
+      <div class="card glass chat">
+        <div class="chat-head"><span class="dot"></span> <b>Chat with your video</b></div>
+        <div class="msgs" id="msgs">
+          <div class="msg bot">Hi! Is video ke baare me kuch bhi poocho — main sirf transcript se jawab dunga.</div>
+        </div>
+        <div class="suggest" id="suggest">
+          <button>Main topic kya hai?</button>
+          <button>Koi deadline mention hui?</button>
+          <button>Key takeaways batao</button>
+        </div>
+        <form class="chat-in" id="chatForm">
+          <input id="chatInput" placeholder="Ask anything about this video..." autocomplete="off" />
+          <button class="btn primary" type="submit">➤</button>
+        </form>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<footer class="foot">VidRAG AI · Whisper + Gemini + Chroma RAG</footer>
+<script src="app.js"></script>
+</body>
+</html>
