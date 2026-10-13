@@ -140,6 +140,7 @@ async def analyze(
         "steps": STEPS,
         "is_url": source.startswith("http"),
     }
+    print(f"JOB CREATED | ID={job_id} | PID={os.getpid()}")
     threading.Thread(
         target=run_job, args=(job_id, source, language), daemon=True
     ).start()
@@ -149,8 +150,17 @@ async def analyze(
 @app.get("/api/jobs/{job_id}")
 def job_status(job_id: str):
     job = JOBS.get(job_id)
+
+    print(
+        f"JOB CHECK | ID={job_id} | "
+        f"FOUND={job is not None} | "
+        f"PID={os.getpid()} | "
+        f"TOTAL_JOBS={len(JOBS)}"
+    )
+
     if not job:
         raise HTTPException(404, "Job not found")
+
     return job
 
 
